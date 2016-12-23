@@ -10,8 +10,8 @@ __version__  = "0.1.1"
 
 DEFAULT_COMPRESS = False
 DEFAULT_CORRECT = True
-DEFAULT_INDENT = 2
-DEFAULT_INDENT_CHAR = " "
+DEFAULT_INDENT = 1
+DEFAULT_INDENT_CHAR = "\t"
 DEFAULT_INLINE = True
 DEFAULT_ENCODING_INPUT = None
 DEFAULT_ENCODING_OUTPUT = None
@@ -558,7 +558,7 @@ class Formatter():
 		def __unicode__(self):
 			str = ""
 			# Don't close empty nodes on compression mode:
-			if (not self.formatter.compress or self.list[self.pos-1].name != "StartElement"):
+			if (self.list[self.pos-1].name != "StartElement"):
 				if (self.preserve in [0] and self.indent):
 					str += self.indent_insert()
 				str += "</%s>" %self.arg[0]
@@ -632,6 +632,8 @@ class Formatter():
 			for attr in sorted(self.arg[1].keys()):
 				str += self.attribute(attr, self.arg[1][attr])
 			if (self.list[self.pos+1].end and self.formatter.compress):
+				str += "/>"
+			elif self.list[self.pos+1].end:
 				str += "/>"
 			else:
 				str += ">"
@@ -721,3 +723,6 @@ def cli():
 	except:
 		cli_usage("Unkonwn error")
 	formatter.enc_output(outfile, res)
+
+if __name__ == '__main__':
+	cli()
