@@ -1,35 +1,24 @@
 <?xml version="1.0" encoding="utf-8"?>
 <etlflow>
-    <configs>
-        <define type="pb_collector" pb_file="conf/weibo.proto" pb_type="WeiboSearch" name="des" is_dync="true"/>
-        <define type="pb_collector" pb_file="conf/weibo.proto" pb_type="Tmp" name="tmp" is_dync="true"/>
-		<so_loader so_path="so" so_file="libweibosearch.so" />
-    </configs>
-
-    <!--datasource type="dstream" from="line" pb_or_txt="1" id="dstreamActionId" guid_file_path="conf/GUID.list"/-->
-    
-	<datasource type="bigpipe" need_compack="true" pipe_name="spider-weibo-search-pipe" pipe_token="BmlrSo-SUB" pipe_num="3" start_msg_no="-1" conf_path="./conf" conf_file="bigpipe_yd.conf" is_pb_or_txt="1"  name="line"/>
-	
-	<fieldmap type="common_copy" from="line" to="tmp.content" absolute_path="true"/>
-
-    <!--multithread threads="{threads}"-->
-    <!--multithread threads="3"-->
-	
-	<fieldmap type="common_copy" from="meta.stime" to="des.logagent_time" test="has(meta.stime)" absolute_path="true"/>
-
-	<string_to_array from="tmp.content" to="tmp_time,des.weibo_user_id,des.weibo_search_type,des.event_query,tmp_device" selector="0,1,2,3,4" delimiter="&#x0009;" absolute_path="true"/>
-
-	<fieldmap type="common_copy" from="des.weibo_user_id" to="des.weibo_user_id" test="!empty($from)" on_test_fail="drop" absolute_path="true"/>
-
-	<transform type="parse_time" from="tmp_time" format="%d/%b/%Y:%H:%M:%S" to="des.event_timestamp" absolute_path="true"/>
-	<fieldmap type="common_copy" from="des.event_timestamp" to="des.time" absolute_path="true"/>
-	<fieldmap type="cfunc" func="CompUserAgent" from="tmp_device" to="event_brand,des.event_device,des.event_device_version,des.event_browser,des.event_browser_version,des.event_os,des.event_os_version,event_useragent,event_client_type" test="!empty($from)"/>
-
-    <!--packet type="compack" log_type="25" version="1" from="des" to="compack" hash_name="des.weibo_user_id" absolute_path="true"/-->
-
-    <debug type="print_pb" from="des" absolute_path="true"/>
-	<debug type="write_pb" from="des" column_delim="\t" kv_delim=":" field_noes="1-9,606,650" des_path="weibo_search_out.txt" null_value="-" />
-    <!--dispatcher type="bigpipeCallBack" pipe_name="weibo-userid-event-pipe" pipe_token="oqTzso-PUB" conf_path="./conf" conf_file="bigpipe_out.conf" from="compack" absolute_path="true" ref_id="dstreamActionId" hash_name="des.weibo_user_id" from_bytes="1" absolute_path="true" singlton="true"/-->
-    <!--/multithread-->
-
+	<configs>
+		<define is_dync="true" name="des" pb_file="conf/weibo.proto" pb_type="WeiboSearch" type="pb_collector"/>
+		<define is_dync="true" name="tmp" pb_file="conf/weibo.proto" pb_type="Tmp" type="pb_collector"/>
+		<so_loader so_file="libweibosearch.so" so_path="so"/>
+	</configs>
+	<!--datasource type="dstream" from="line" pb_or_txt="1" id="dstreamActionId" guid_file_path="conf/GUID.list"/-->
+	<datasource conf_file="bigpipe_yd.conf" conf_path="./conf" is_pb_or_txt="1" name="line" need_compack="true" pipe_name="spider-weibo-search-pipe" pipe_num="3" pipe_token="BmlrSo-SUB" start_msg_no="-1" type="bigpipe"/>
+	<fieldmap absolute_path="true" from="line" to="tmp.content" type="common_copy"/>
+	<!--multithread threads="{threads}"-->
+	<!--multithread threads="3"-->
+	<fieldmap absolute_path="true" from="meta.stime" test="has(meta.stime)" to="des.logagent_time" type="common_copy"/>
+	<string_to_array absolute_path="true" delimiter="	" from="tmp.content" selector="0,1,2,3,4" to="tmp_time,des.weibo_user_id,des.weibo_search_type,des.event_query,tmp_device"/>
+	<fieldmap absolute_path="true" from="des.weibo_user_id" on_test_fail="drop" test="!empty($from)" to="des.weibo_user_id" type="common_copy"/>
+	<transform absolute_path="true" format="%d/%b/%Y:%H:%M:%S" from="tmp_time" to="des.event_timestamp" type="parse_time"/>
+	<fieldmap absolute_path="true" from="des.event_timestamp" to="des.time" type="common_copy"/>
+	<fieldmap from="tmp_device" func="CompUserAgent" test="!empty($from)" to="event_brand,des.event_device,des.event_device_version,des.event_browser,des.event_browser_version,des.event_os,des.event_os_version,event_useragent,event_client_type" type="cfunc"/>
+	<!--packet type="compack" log_type="25" version="1" from="des" to="compack" hash_name="des.weibo_user_id" absolute_path="true"/-->
+	<debug absolute_path="true" from="des" type="print_pb"/>
+	<debug column_delim="\t" des_path="weibo_search_out.txt" field_noes="1-9,606,650" from="des" kv_delim=":" null_value="-" type="write_pb"/>
+	<!--dispatcher type="bigpipeCallBack" pipe_name="weibo-userid-event-pipe" pipe_token="oqTzso-PUB" conf_path="./conf" conf_file="bigpipe_out.conf" from="compack" absolute_path="true" ref_id="dstreamActionId" hash_name="des.weibo_user_id" from_bytes="1" absolute_path="true" singlton="true"/-->
+	<!--/multithread-->
 </etlflow>
